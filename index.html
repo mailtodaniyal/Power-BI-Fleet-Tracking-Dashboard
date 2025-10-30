@@ -1,0 +1,3092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fleet Management Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-light: #3b82f6;
+            --primary-dark: #1e40af;
+            --secondary: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #06b6d4;
+            --success: #22c55e;
+            --purple: #a855f7;
+            
+            --bg-light: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-sidebar: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-light);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            padding: 2rem 0;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: var(--bg-light);
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+
+        .logo-container {
+            padding: 0 1.5rem 2rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+            padding: 0 1rem;
+        }
+
+        .nav-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.75rem;
+            padding: 0 0.5rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.25rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            color: var(--text-secondary);
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: var(--primary);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .nav-item:hover {
+            background: rgba(37, 99, 235, 0.05);
+            color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .nav-item.active {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+        }
+
+        .nav-item.active::before {
+            transform: scaleY(1);
+        }
+
+        .nav-item i {
+            font-size: 1.1rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        .main-content {
+            padding: 2rem;
+            overflow-y: auto;
+            max-height: 100vh;
+            background: var(--bg-light);
+        }
+
+        .main-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .main-content::-webkit-scrollbar-track {
+            background: var(--bg-light);
+        }
+
+        .main-content::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header-left h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .last-updated {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s ease infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: scale(1.2);
+            }
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn i {
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), var(--secondary));
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(34, 197, 94, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), #dc2626);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+
+        .stat-card:hover::before {
+            transform: translateX(100%);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+            border-color: var(--primary);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+
+        .stat-icon.blue {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+        }
+
+        .stat-icon.green {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--success);
+        }
+
+        .stat-icon.yellow {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .stat-icon.red {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .stat-icon.cyan {
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--info);
+        }
+
+        .stat-icon.purple {
+            background: rgba(168, 85, 247, 0.1);
+            color: var(--purple);
+        }
+
+        .stat-title {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-change {
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .stat-change.positive {
+            color: var(--success);
+        }
+
+        .stat-change.negative {
+            color: var(--danger);
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
+        }
+
+        .card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(37, 99, 235, 0.05) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.6s ease;
+        }
+
+        .card:hover::after {
+            opacity: 1;
+        }
+
+        .card:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .icon-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border);
+            background: var(--bg-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-muted);
+        }
+
+        .icon-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .map-container {
+            height: 400px;
+            background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+            border-radius: 0.75rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .map-bg {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.3;
+        }
+
+        .map-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .vehicle-marker {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            animation: markerPulse 2s ease-in-out infinite;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            color: white;
+        }
+
+        .vehicle-marker:hover {
+            transform: scale(1.3);
+            z-index: 10;
+        }
+
+        .vehicle-marker.moving {
+            background: var(--success);
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.6);
+        }
+
+        .vehicle-marker.stopped {
+            background: var(--warning);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.6);
+        }
+
+        .vehicle-marker.idle {
+            background: var(--info);
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.6);
+        }
+
+        .vehicle-marker.alert {
+            background: var(--danger);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+        }
+
+        @keyframes markerPulse {
+            0%, 100% {
+                box-shadow: 0 0 20px currentColor;
+            }
+            50% {
+                box-shadow: 0 0 40px currentColor;
+            }
+        }
+
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+
+        .donut-chart {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .donut-svg {
+            transform: rotate(-90deg);
+        }
+
+        .donut-segment {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .donut-segment:hover {
+            opacity: 0.8;
+            filter: brightness(1.2);
+        }
+
+        .chart-legend {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg-light);
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .legend-item:hover {
+            background: rgba(37, 99, 235, 0.05);
+            transform: translateX(5px);
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+
+        .legend-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            flex: 1;
+        }
+
+        .legend-value {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+
+        .vehicle-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .vehicle-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .vehicle-list::-webkit-scrollbar-track {
+            background: var(--bg-light);
+            border-radius: 4px;
+        }
+
+        .vehicle-list::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+
+        .vehicle-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .vehicle-item:hover {
+            background: rgba(37, 99, 235, 0.05);
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .vehicle-status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            animation: statusPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes statusPulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .vehicle-status-dot.moving {
+            background: var(--success);
+            box-shadow: 0 0 10px var(--success);
+        }
+
+        .vehicle-status-dot.stopped {
+            background: var(--warning);
+            box-shadow: 0 0 10px var(--warning);
+        }
+
+        .vehicle-status-dot.idle {
+            background: var(--info);
+            box-shadow: 0 0 10px var(--info);
+        }
+
+        .vehicle-status-dot.alert {
+            background: var(--danger);
+            box-shadow: 0 0 10px var(--danger);
+        }
+
+        .vehicle-info {
+            flex: 1;
+        }
+
+        .vehicle-name {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: var(--text-primary);
+        }
+
+        .vehicle-location {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .vehicle-status-text {
+            font-size: 0.875rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+        }
+
+        .vehicle-status-text.moving {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--success);
+        }
+
+        .vehicle-status-text.stopped {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .vehicle-status-text.idle {
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--info);
+        }
+
+        .vehicle-status-text.alert {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .line-chart {
+            height: 300px;
+            position: relative;
+        }
+
+        .line-chart svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .chart-line {
+            fill: none;
+            stroke: var(--primary);
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            filter: drop-shadow(0 0 10px rgba(37, 99, 235, 0.3));
+            animation: drawLine 2s ease forwards;
+        }
+
+        @keyframes drawLine {
+            from {
+                stroke-dashoffset: 1000;
+            }
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        .chart-area {
+            fill: url(#gradient);
+            opacity: 0.3;
+        }
+
+        .chart-grid {
+            stroke: var(--border);
+            stroke-width: 1;
+            opacity: 0.5;
+        }
+
+        .chart-axis {
+            stroke: var(--border);
+            stroke-width: 1;
+        }
+
+        .chart-label {
+            fill: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .performance-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .performance-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: var(--bg-light);
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .performance-item:hover {
+            background: rgba(37, 99, 235, 0.05);
+            border-color: var(--primary);
+            transform: scale(1.02);
+        }
+
+        .performance-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .performance-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .alert-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .alert-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .alert-list::-webkit-scrollbar-track {
+            background: var(--bg-light);
+            border-radius: 4px;
+        }
+
+        .alert-list::-webkit-scrollbar-thumb {
+            background: var(--danger);
+            border-radius: 4px;
+        }
+
+        .alert-item {
+            padding: 1rem;
+            background: var(--bg-light);
+            border-left: 3px solid;
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .alert-item:hover {
+            background: rgba(255, 255, 255, 0.8);
+            transform: translateX(5px);
+        }
+
+        .alert-item.critical {
+            border-color: var(--danger);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .alert-item.warning {
+            border-color: var(--warning);
+            background: rgba(245, 158, 11, 0.05);
+        }
+
+        .alert-item.info {
+            border-color: var(--info);
+            background: rgba(6, 182, 212, 0.05);
+        }
+
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+
+        .alert-title {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .alert-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-weight: 500;
+        }
+
+        .alert-badge.critical {
+            background: var(--danger);
+            color: white;
+        }
+
+        .alert-badge.warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .alert-badge.info {
+            background: var(--info);
+            color: white;
+        }
+
+        .alert-description {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .alert-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.875rem;
+        }
+
+        tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        tbody tr:hover {
+            background: rgba(37, 99, 235, 0.03);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-badge.online {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--success);
+        }
+
+        .status-badge.offline {
+            background: rgba(148, 163, 184, 0.1);
+            color: var(--text-muted);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--info));
+            border-radius: 4px;
+            transition: width 1s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .filter-section {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            background: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .filter-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        select,
+        input[type="date"],
+        input[type="text"] {
+            padding: 0.75rem 1rem;
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+            min-width: 150px;
+        }
+
+        select:focus,
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        select:hover,
+        input:hover {
+            border-color: var(--primary);
+        }
+
+        option {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding-left: 3rem;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .quick-filters {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .quick-filter-btn {
+            padding: 0.5rem 1rem;
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quick-filter-btn:hover {
+            background: rgba(37, 99, 235, 0.1);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .quick-filter-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .metric-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--info));
+        }
+
+        .metric-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .metric-icon-large {
+            width: 56px;
+            height: 56px;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+        }
+
+        .metric-content h3 {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-content .value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .metric-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .metric-trend {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .trend-up {
+            color: var(--success);
+        }
+
+        .trend-down {
+            color: var(--danger);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+            box-shadow: var(--shadow-hover);
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .close-modal {
+            width: 32px;
+            height: 32px;
+            border-radius: 0.5rem;
+            border: none;
+            background: var(--bg-light);
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .close-modal:hover {
+            background: var(--danger);
+            color: white;
+            transform: rotate(90deg);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        textarea.form-input {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            box-shadow: var(--shadow-hover);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            min-width: 300px;
+            z-index: 2000;
+            animation: slideInRight 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .notification.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+            }
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        .notification.success {
+            border-left: 4px solid var(--success);
+        }
+
+        .notification.error {
+            border-left: 4px solid var(--danger);
+        }
+
+        .notification.warning {
+            border-left: 4px solid var(--warning);
+        }
+
+        .notification.info {
+            border-left: 4px solid var(--info);
+        }
+
+        .notification-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .notification.success .notification-icon {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--success);
+        }
+
+        .notification.error .notification-icon {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: var(--text-primary);
+        }
+
+        .notification-message {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .heatmap-grid {
+            display: grid;
+            grid-template-columns: repeat(24, 1fr);
+            gap: 4px;
+            margin-top: 1rem;
+        }
+
+        .heatmap-cell {
+            aspect-ratio: 1;
+            border-radius: 4px;
+            background: rgba(37, 99, 235, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .heatmap-cell:hover {
+            transform: scale(1.2);
+            z-index: 10;
+        }
+
+        .heatmap-cell.low {
+            background: rgba(34, 197, 94, 0.3);
+        }
+
+        .heatmap-cell.medium {
+            background: rgba(245, 158, 11, 0.5);
+        }
+
+        .heatmap-cell.high {
+            background: rgba(239, 68, 68, 0.7);
+        }
+
+        .tooltip {
+            position: absolute;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+            box-shadow: var(--shadow);
+            color: var(--text-primary);
+        }
+
+        .tooltip.show {
+            display: block;
+        }
+
+        .system-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2rem;
+            padding: 1rem;
+            background: var(--bg-card);
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        .status-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .status-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .status-value {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .status-value.online {
+            color: var(--success);
+        }
+
+        .status-value.optimal {
+            color: var(--success);
+        }
+
+        @media (max-width: 1200px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .performance-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .header-actions {
+                width: 100%;
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .filter-section {
+                flex-direction: column;
+            }
+
+            .search-box {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="logo-container">
+                <div class="logo">
+                    <i class="fas fa-route"></i>
+                    FleetTrack Pro
+                </div>
+            </div>
+
+            <nav>
+                <div class="nav-section">
+                    <div class="nav-title">Main Menu</div>
+                    <div class="nav-item active">
+                        <i class="fas fa-home"></i>
+                        <span>Dashboard</span>
+                    </div>
+                    <div class="nav-item">
+                        <i class="fas fa-map-marked-alt"></i>
+                        <span>Live Tracking</span>
+                    </div>
+                    <div class="nav-item">
+                        <i class="fas fa-truck"></i>
+                        <span>Vehicles</span>
+                    </div>
+                    <div class="nav-item">
+                        <i class="fas fa-users"></i>
+                        <span>Drivers</span>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-title">Analytics</div>
+                    <div class="nav-item">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Reports</span>
+                    </div>
+                    <div class="nav-item">
+                        <i class="fas fa-route"></i>
+                        <span>Routes</span>
+                    </div>
+                    <div class="nav-item">
+                        <i class="fas fa-gas-pump"></i>
+                        <span>Fuel Usage</span>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-title">Management</div>
+                    <div class="nav-item">
+                        <i class="fas fa-wrench"></i>
+                        <span>Maintenance</span>
+                    </div>
+                    <div class="nav-item">
+                        <i class="fas fa-bell"></i>
+                        <span>Alerts</span>
+                    </div>
+                    <div class="nav-item">
+                        <i class="fas fa-map-pin"></i>
+                        <span>Geozones</span>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-title">Settings</div>
+                    <div class="nav-item">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </div>
+                    <div class="nav-item">
+                        <i class="fas fa-user-circle"></i>
+                        <span>Profile</span>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <div class="header-left">
+                    <h1>Fleet Dashboard</h1>
+                    <div class="last-updated">
+                        <div class="pulse-dot"></div>
+                        Live Data • Last Updated: <span id="lastUpdate">20:32:45</span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-success">
+                        <i class="fas fa-file-excel"></i>
+                        <span>Export Excel</span>
+                    </button>
+                    <button class="btn btn-danger">
+                        <i class="fas fa-file-pdf"></i>
+                        <span>Export PDF</span>
+                    </button>
+                    <button class="btn btn-primary" id="refreshBtn">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>Refresh</span>
+                    </button>
+                </div>
+            </header>
+
+            <div class="filter-section">
+                <div class="search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" placeholder="Search vehicles, drivers, locations..." id="searchInput">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Vehicle Status</label>
+                    <select id="vehicleStatusFilter">
+                        <option value="all">All Status</option>
+                        <option value="moving">Moving (24)</option>
+                        <option value="stopped">Stopped (18)</option>
+                        <option value="idle">Idle (8)</option>
+                        <option value="no-connection">No Connection (3)</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Vehicle Type</label>
+                    <select id="vehicleTypeFilter">
+                        <option value="all">All Types</option>
+                        <option value="truck">Truck</option>
+                        <option value="van">Van</option>
+                        <option value="car">Car</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Geozone</label>
+                    <select id="geozoneFilter">
+                        <option value="all">All Zones</option>
+                        <option value="zone1">Downtown</option>
+                        <option value="zone2">Industrial Park</option>
+                        <option value="zone3">Warehouse District</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Time Range</label>
+                    <select id="dateRange">
+                        <option value="today">Today</option>
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                        <option value="custom">Custom</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Maintenance Status</label>
+                    <select id="maintenanceFilter">
+                        <option value="all">All Status</option>
+                        <option value="overdue">Overdue (5)</option>
+                        <option value="due-soon">Due Soon (12)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="quick-filters">
+                <button class="quick-filter-btn active">All Vehicles</button>
+                <button class="quick-filter-btn">Moving Only</button>
+                <button class="quick-filter-btn">Stopped</button>
+                <button class="quick-filter-btn">Alerts</button>
+                <button class="quick-filter-btn">Maintenance Due</button>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-title">Total Vehicles</div>
+                            <div class="stat-value">53</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>5.2% vs last week</span>
+                            </div>
+                        </div>
+                        <div class="stat-icon blue">
+                            <i class="fas fa-truck"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-title">Moving</div>
+                            <div class="stat-value" style="color: var(--success)">24</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>12% increase</span>
+                            </div>
+                        </div>
+                        <div class="stat-icon green">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-title">Stopped</div>
+                            <div class="stat-value" style="color: var(--warning)">18</div>
+                            <div class="stat-change negative">
+                                <i class="fas fa-arrow-down"></i>
+                                <span>8% decrease</span>
+                            </div>
+                        </div>
+                        <div class="stat-icon yellow">
+                            <i class="fas fa-pause"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-title">Idle</div>
+                            <div class="stat-value" style="color: var(--info)">8</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-minus"></i>
+                                <span>No change</span>
+                            </div>
+                        </div>
+                        <div class="stat-icon cyan">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-title">No Connection</div>
+                            <div class="stat-value" style="color: var(--text-muted)">3</div>
+                            <div class="stat-change negative">
+                                <i class="fas fa-arrow-down"></i>
+                                <span>2 reconnected</span>
+                            </div>
+                        </div>
+                        <div class="stat-icon" style="background: rgba(148, 163, 184, 0.1); color: var(--text-muted)">
+                            <i class="fas fa-wifi-slash"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-title">Battery Issues</div>
+                            <div class="stat-value" style="color: var(--danger)">2</div>
+                            <div class="stat-change negative">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <span>Needs attention</span>
+                            </div>
+                        </div>
+                        <div class="stat-icon red">
+                            <i class="fas fa-battery-quarter"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-grid">
+                <div class="card" style="grid-column: 1 / -1;">
+                    <div class="card-header">
+                        <h2 class="card-title">Live Vehicle Map</h2>
+                        <div class="card-actions">
+                            <div class="icon-btn">
+                                <i class="fas fa-expand"></i>
+                            </div>
+                            <div class="icon-btn">
+                                <i class="fas fa-sync-alt"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="map-container" id="mapContainer">
+                        <svg class="map-overlay" id="mapSvg" viewBox="0 0 800 400">
+                            <defs>
+                                <filter id="glow">
+                                    <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+                                    <feMerge>
+                                        <feMergeNode in="coloredBlur" />
+                                        <feMergeNode in="SourceGraphic" />
+                                    </feMerge>
+                                </filter>
+                            </defs>
+                        </svg>
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <div style="width: 12px; height: 12px; background: var(--success); border-radius: 50%;"></div>
+                            <span style="font-size: 0.875rem;">Moving (24)</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <div style="width: 12px; height: 12px; background: var(--warning); border-radius: 50%;"></div>
+                            <span style="font-size: 0.875rem;">Stopped (18)</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <div style="width: 12px; height: 12px; background: var(--info); border-radius: 50%;"></div>
+                            <span style="font-size: 0.875rem;">Idle (8)</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <div style="width: 12px; height: 12px; background: var(--danger); border-radius: 50%;"></div>
+                            <span style="font-size: 0.875rem;">Alert (2)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Vehicle Status Distribution</h2>
+                        <div class="card-actions">
+                            <div class="icon-btn">
+                                <i class="fas fa-download"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <svg width="100%" height="250" id="donutChart"></svg>
+                    </div>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: var(--success);"></div>
+                            <div class="legend-label">Moving</div>
+                            <div class="legend-value">24</div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: var(--warning);"></div>
+                            <div class="legend-label">Stopped</div>
+                            <div class="legend-value">18</div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: var(--info);"></div>
+                            <div class="legend-label">Idle</div>
+                            <div class="legend-value">8</div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: var(--text-muted);"></div>
+                            <div class="legend-label">No Connection</div>
+                            <div class="legend-value">3</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Live Vehicle Status</h2>
+                        <div class="card-actions">
+                            <div class="icon-btn">
+                                <i class="fas fa-filter"></i>
+                            </div>
+                            <div class="icon-btn">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="vehicle-list">
+                        <div class="vehicle-item">
+                            <div class="vehicle-status-dot moving"></div>
+                            <div class="vehicle-info">
+                                <div class="vehicle-name">TRK-001</div>
+                                <div class="vehicle-location">Downtown Route</div>
+                            </div>
+                            <div class="vehicle-status-text moving">Moving</div>
+                        </div>
+                        <div class="vehicle-item">
+                            <div class="vehicle-status-dot stopped"></div>
+                            <div class="vehicle-info">
+                                <div class="vehicle-name">VAN-023</div>
+                                <div class="vehicle-location">Industrial Park</div>
+                            </div>
+                            <div class="vehicle-status-text stopped">Stopped</div>
+                        </div>
+                        <div class="vehicle-item">
+                            <div class="vehicle-status-dot idle"></div>
+                            <div class="vehicle-info">
+                                <div class="vehicle-name">CAR-045</div>
+                                <div class="vehicle-location">Warehouse District</div>
+                            </div>
+                            <div class="vehicle-status-text idle">Idle</div>
+                        </div>
+                        <div class="vehicle-item">
+                            <div class="vehicle-status-dot alert"></div>
+                            <div class="vehicle-info">
+                                <div class="vehicle-name">TRK-012</div>
+                                <div class="vehicle-location">No Connection</div>
+                            </div>
+                            <div class="vehicle-status-text alert">Alert</div>
+                        </div>
+                        <div class="vehicle-item">
+                            <div class="vehicle-status-dot moving"></div>
+                            <div class="vehicle-info">
+                                <div class="vehicle-name">VAN-087</div>
+                                <div class="vehicle-location">Highway Route</div>
+                            </div>
+                            <div class="vehicle-status-text moving">Moving</div>
+                        </div>
+                        <div class="vehicle-item">
+                            <div class="vehicle-status-dot moving"></div>
+                            <div class="vehicle-info">
+                                <div class="vehicle-name">TRK-034</div>
+                                <div class="vehicle-location">North District</div>
+                            </div>
+                            <div class="vehicle-status-text moving">Moving</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="grid-column: 1 / -1;">
+                    <div class="card-header">
+                        <h2 class="card-title">Daily Kilometers Driven</h2>
+                        <div class="card-actions">
+                            <div class="icon-btn">
+                                <i class="fas fa-calendar"></i>
+                            </div>
+                            <div class="icon-btn">
+                                <i class="fas fa-download"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="line-chart">
+                        <svg width="100%" height="100%" id="lineChart" viewBox="0 0 800 300">
+                            <defs>
+                                <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" style="stop-color:rgb(37,99,235);stop-opacity:0.5" />
+                                    <stop offset="100%" style="stop-color:rgb(37,99,235);stop-opacity:0" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Fleet Performance Metrics</h2>
+                        <div class="card-actions">
+                            <div class="icon-btn">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="performance-grid">
+                        <div class="performance-item">
+                            <div class="performance-label">
+                                <i class="fas fa-route"></i>
+                                Total Distance Today
+                            </div>
+                            <div class="performance-value">2,847 km</div>
+                        </div>
+                        <div class="performance-item">
+                            <div class="performance-label">
+                                <i class="fas fa-tachometer-alt"></i>
+                                Average Speed
+                            </div>
+                            <div class="performance-value">65 km/h</div>
+                        </div>
+                        <div class="performance-item">
+                            <div class="performance-label">
+                                <i class="fas fa-gas-pump"></i>
+                                Fuel Efficiency
+                            </div>
+                            <div class="performance-value">8.2 L/100km</div>
+                        </div>
+                        <div class="performance-item">
+                            <div class="performance-label">
+                                <i class="fas fa-clock"></i>
+                                Active Hours
+                            </div>
+                            <div class="performance-value">12.5 hrs</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 1.5rem;">
+                        <div style="margin-bottom: 1rem;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span style="font-size: 0.875rem; color: var(--text-muted);">Fleet Utilization</span>
+                                <span style="font-weight: 600;">87%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 87%;"></div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span style="font-size: 0.875rem; color: var(--text-muted);">Driver Efficiency</span>
+                                <span style="font-weight: 600;">92%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 92%; background: linear-gradient(90deg, var(--success), var(--secondary));"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span style="font-size: 0.875rem; color: var(--text-muted);">Maintenance Compliance</span>
+                                <span style="font-weight: 600;">78%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 78%; background: linear-gradient(90deg, var(--warning), var(--warning));"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Maintenance Alerts</h2>
+                        <div class="card-actions">
+                            <button class="icon-btn" id="manageAlerts">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="alert-list">
+                        <div class="alert-item critical">
+                            <div class="alert-header">
+                                <div class="alert-title">
+                                    <span class="alert-badge critical">CRITICAL</span>
+                                    TRK-007
+                                </div>
+                            </div>
+                            <div class="alert-description">Oil Change Overdue - Due 3 days ago</div>
+                            <div class="alert-time">
+                                <i class="fas fa-clock"></i> 3 days overdue
+                            </div>
+                        </div>
+                        <div class="alert-item warning">
+                            <div class="alert-header">
+                                <div class="alert-title">
+                                    <span class="alert-badge warning">WARNING</span>
+                                    VAN-015
+                                </div>
+                            </div>
+                            <div class="alert-description">Tire Inspection Due - Due in 5 days</div>
+                            <div class="alert-time">
+                                <i class="fas fa-clock"></i> Due in 5 days
+                            </div>
+                        </div>
+                        <div class="alert-item warning">
+                            <div class="alert-header">
+                                <div class="alert-title">
+                                    <span class="alert-badge warning">WARNING</span>
+                                    CAR-032
+                                </div>
+                            </div>
+                            <div class="alert-description">Brake Service Due - Due in 5 days</div>
+                            <div class="alert-time">
+                                <i class="fas fa-clock"></i> Due in 5 days
+                            </div>
+                        </div>
+                        <div class="alert-item info">
+                            <div class="alert-header">
+                                <div class="alert-title">
+                                    <span class="alert-badge info">INFO</span>
+                                    TRK-019
+                                </div>
+                            </div>
+                            <div class="alert-description">General Inspection - Due in 2 weeks</div>
+                            <div class="alert-time">
+                                <i class="fas fa-clock"></i> Due in 2 weeks
+                            </div>
+                        </div>
+                        <div class="alert-item info">
+                            <div class="alert-header">
+                                <div class="alert-title">
+                                    <span class="alert-badge info">INFO</span>
+                                    VAN-041
+                                </div>
+                            </div>
+                            <div class="alert-description">Battery Check - Due in 3 weeks</div>
+                            <div class="alert-time">
+                                <i class="fas fa-clock"></i> Due in 3 weeks
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card full-width">
+                    <div class="card-header">
+                        <h2 class="card-title">Fleet Activity Heatmap (24 Hours)</h2>
+                        <div class="card-actions">
+                            <div class="icon-btn">
+                                <i class="fas fa-question-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; align-items: center;">
+                        <span style="font-size: 0.875rem; color: var(--text-muted);">Low Activity</span>
+                        <div style="width: 20px; height: 20px; background: rgba(34, 197, 94, 0.3); border-radius: 4px;"></div>
+                        <div style="width: 20px; height: 20px; background: rgba(245, 158, 11, 0.5); border-radius: 4px;"></div>
+                        <div style="width: 20px; height: 20px; background: rgba(239, 68, 68, 0.7); border-radius: 4px;"></div>
+                        <span style="font-size: 0.875rem; color: var(--text-muted);">High Activity</span>
+                    </div>
+                    <div class="heatmap-grid" id="heatmapGrid"></div>
+                </div>
+
+                <div class="card full-width">
+                    <div class="card-header">
+                        <h2 class="card-title">Vehicle Details</h2>
+                        <div class="card-actions">
+                            <div class="icon-btn">
+                                <i class="fas fa-columns"></i>
+                            </div>
+                            <div class="icon-btn">
+                                <i class="fas fa-download"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Vehicle ID</th>
+                                    <th>Type</th>
+                                    <th>Driver</th>
+                                    <th>Status</th>
+                                    <th>Location</th>
+                                    <th>Speed</th>
+                                    <th>Odometer</th>
+                                    <th>Fuel</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vehicleTableBody">
+                                <tr>
+                                    <td><strong>TRK-001</strong></td>
+                                    <td>Truck</td>
+                                    <td>John Smith</td>
+                                    <td><span class="status-badge online">Moving</span></td>
+                                    <td>Downtown Route</td>
+                                    <td>65 km/h</td>
+                                    <td>45,230 km</td>
+                                    <td>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 75%;"></div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div style="display: flex; gap: 0.5rem;">
+                                            <div class="icon-btn" style="font-size: 0.875rem;">
+                                                <i class="fas fa-eye"></i>
+                                            </div>
+                                            <div class="icon-btn" style="font-size: 0.875rem;">
+                                                <i class="fas fa-edit"></i>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>VAN-023</strong></td>
+                                    <td>Van</td>
+                                    <td>Sarah Johnson</td>
+                                    <td><span class="status-badge" style="background: rgba(245, 158, 11, 0.1); color: var(--warning);">Stopped</span></td>
+                                    <td>Industrial Park</td>
+                                    <td>0 km/h</td>
+                                    <td>32,150 km</td>
+                                    <td>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 45%;"></div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div style="display: flex; gap: 0.5rem;">
+                                            <div class="icon-btn" style="font-size: 0.875rem;">
+                                                <i class="fas fa-eye"></i>
+                                            </div>
+                                            <div class="icon-btn" style="font-size: 0.875rem;">
+                                                <i class="fas fa-edit"></i>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>CAR-045</strong></td>
+                                    <td>Car</td>
+                                    <td>Mike Davis</td>
+                                    <td><span class="status-badge" style="background: rgba(6, 182, 212, 0.1); color: var(--info);">Idle</span></td>
+                                    <td>Warehouse District</td>
+                                    <td>0 km/h</td>
+                                    <td>28,920 km</td>
+                                    <td>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 60%;"></div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div style="display: flex; gap: 0.5rem;">
+                                            <div class="icon-btn" style="font-size: 0.875rem;">
+                                                <i class="fas fa-eye"></i>
+                                            </div>
+                                            <div class="icon-btn" style="font-size: 0.875rem;">
+                                                <i class="fas fa-edit"></i>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>TRK-012</strong></td>
+                                    <td>Truck</td>
+                                    <td>Robert Wilson</td>
+                                    <td><span class="status-badge offline">No Connection</span></td>
+                                    <td>Unknown</td>
+                                    <td>-- km/h</td>
+                                    <td>51,340 km</td>
+                                    <td>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 0%; background: var(--text-muted);"></div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div style="display: flex; gap: 0.5rem;">
+                                            <div class="icon-btn" style="font-size: 0.875rem;">
+                                                <i class="fas fa-eye"></i>
+                                            </div>
+                                            <div class="icon-btn" style="font-size: 0.875rem;">
+                                                <i class="fas fa-edit"></i>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>VAN-087</strong></td>
+                                    <td>Van</td>
+                                    <td>Emily Brown</td>
+                                    <td><span class="status-badge online">Moving</span></td>
+                                    <td>Highway Route</td>
+                                    <td>88 km/h</td>
+                                    <td>41,670 km</td>
+                                    <td>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 85%;"></div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div style="display: flex; gap: 0.5rem;">
+                                            <div class="icon-btn" style="font-size: 0.875rem;">
+                                                <i class="fas fa-eye"></i>
+                                            </div>
+                                            <div class="icon-btn" style="font-size: 0.875rem;">
+                                                <i class="fas fa-edit"></i>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="metric-cards full-width">
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon-large">
+                                <i class="fas fa-map-marked-alt"></i>
+                            </div>
+                            <div class="metric-content">
+                                <h3>Total Routes Today</h3>
+                                <div class="value">147</div>
+                            </div>
+                        </div>
+                        <div class="metric-footer">
+                            <div class="metric-trend trend-up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>23% from yesterday</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon-large" style="background: rgba(34, 197, 94, 0.1); color: var(--success);">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="metric-content">
+                                <h3>Completed Deliveries</h3>
+                                <div class="value" style="color: var(--success);">132</div>
+                            </div>
+                        </div>
+                        <div class="metric-footer">
+                            <div class="metric-trend trend-up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>89% completion rate</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon-large" style="background: rgba(245, 158, 11, 0.1); color: var(--warning);">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="metric-content">
+                                <h3>Pending Issues</h3>
+                                <div class="value" style="color: var(--warning);">8</div>
+                            </div>
+                        </div>
+                        <div class="metric-footer">
+                            <div class="metric-trend trend-down">
+                                <i class="fas fa-arrow-down"></i>
+                                <span>5 resolved today</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon-large" style="background: rgba(168, 85, 247, 0.1); color: var(--purple);">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="metric-content">
+                                <h3>Active Drivers</h3>
+                                <div class="value" style="color: var(--purple);">42</div>
+                            </div>
+                        </div>
+                        <div class="metric-footer">
+                            <div class="metric-trend trend-up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>3 more than average</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="system-status">
+                <div class="status-item">
+                    <div class="status-label">System Online</div>
+                    <div class="status-value online">Online</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Data Refresh</div>
+                    <div class="status-value">Every 30 seconds</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Connected Vehicles</div>
+                    <div class="status-value">50/53</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Performance</div>
+                    <div class="status-value optimal">Optimal</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Response Time</div>
+                    <div class="status-value">120ms</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">System</div>
+                    <div class="status-value">2025 Fleet Management</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal" id="alertModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Maintenance Alert Details</h2>
+                <button class="close-modal" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Vehicle ID</label>
+                    <input type="text" class="form-input" value="TRK-007" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Alert Type</label>
+                    <select class="form-input">
+                        <option>Oil Change</option>
+                        <option>Tire Inspection</option>
+                        <option>Brake Service</option>
+                        <option>General Inspection</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Priority</label>
+                    <select class="form-input">
+                        <option>Critical</option>
+                        <option>High</option>
+                        <option>Medium</option>
+                        <option>Low</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Due Date</label>
+                    <input type="date" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <textarea class="form-input" placeholder="Add any additional notes..."></textarea>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button class="btn btn-primary" style="flex: 1;">
+                        <i class="fas fa-save"></i>
+                        <span>Save Changes</span>
+                    </button>
+                    <button class="btn btn-danger" onclick="closeModal()">
+                        <i class="fas fa-times"></i>
+                        <span>Cancel</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification">
+        <div class="notification-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="notification-content">
+            <div class="notification-title">Success</div>
+            <div class="notification-message">Dashboard refreshed successfully</div>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { hour12: false });
+            document.getElementById('lastUpdate').textContent = timeString;
+        }
+
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        const vehicles = [
+            { x: 150, y: 100, status: 'moving' },
+            { x: 320, y: 180, status: 'stopped' },
+            { x: 500, y: 120, status: 'idle' },
+            { x: 650, y: 250, status: 'alert' },
+            { x: 200, y: 300, status: 'moving' },
+            { x: 450, y: 280, status: 'moving' },
+            { x: 580, y: 150, status: 'stopped' },
+            { x: 350, y: 320, status: 'idle' },
+            { x: 120, y: 220, status: 'moving' },
+            { x: 700, y: 180, status: 'moving' }
+        ];
+
+        const mapSvg = document.getElementById('mapSvg');
+        vehicles.forEach((vehicle, index) => {
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', vehicle.x);
+            circle.setAttribute('cy', vehicle.y);
+            circle.setAttribute('r', '8');
+            circle.setAttribute('fill',
+                vehicle.status === 'moving' ? '#22c55e' :
+                    vehicle.status === 'stopped' ? '#f59e0b' :
+                        vehicle.status === 'idle' ? '#06b6d4' : '#ef4444'
+            );
+            circle.setAttribute('filter', 'url(#glow)');
+            circle.style.cursor = 'pointer';
+            circle.style.animation = `markerPulse 2s ease-in-out infinite`;
+            circle.style.animationDelay = `${index * 0.2}s`;
+
+            circle.addEventListener('mouseenter', (e) => {
+                const tooltip = document.getElementById('tooltip');
+                tooltip.textContent = `Vehicle ${index + 1} - ${vehicle.status}`;
+                tooltip.classList.add('show');
+                tooltip.style.left = e.pageX + 10 + 'px';
+                tooltip.style.top = e.pageY + 10 + 'px';
+            });
+
+            circle.addEventListener('mouseleave', () => {
+                document.getElementById('tooltip').classList.remove('show');
+            });
+
+            mapSvg.appendChild(circle);
+        });
+
+        function createDonutChart() {
+            const svg = document.getElementById('donutChart');
+            const data = [
+                { value: 24, color: '#22c55e', label: 'Moving' },
+                { value: 18, color: '#f59e0b', label: 'Stopped' },
+                { value: 8, color: '#06b6d4', label: 'Idle' },
+                { value: 3, color: '#94a3b8', label: 'No Connection' }
+            ];
+
+            const total = data.reduce((sum, item) => sum + item.value, 0);
+            const centerX = 150;
+            const centerY = 125;
+            const radius = 80;
+            const innerRadius = 50;
+
+            let currentAngle = 0;
+
+            data.forEach((item, index) => {
+                const percentage = item.value / total;
+                const angle = percentage * 2 * Math.PI;
+
+                const x1 = centerX + radius * Math.cos(currentAngle - Math.PI / 2);
+                const y1 = centerY + radius * Math.sin(currentAngle - Math.PI / 2);
+                const x2 = centerX + radius * Math.cos(currentAngle + angle - Math.PI / 2);
+                const y2 = centerY + radius * Math.sin(currentAngle + angle - Math.PI / 2);
+                const x3 = centerX + innerRadius * Math.cos(currentAngle + angle - Math.PI / 2);
+                const y3 = centerY + innerRadius * Math.sin(currentAngle + angle - Math.PI / 2);
+                const x4 = centerX + innerRadius * Math.cos(currentAngle - Math.PI / 2);
+                const y4 = centerY + innerRadius * Math.sin(currentAngle - Math.PI / 2);
+
+                const largeArcFlag = angle > Math.PI ? 1 : 0;
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const pathData = `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2} L ${x3} ${y3} A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${x4} ${y4} Z`;
+                path.setAttribute('d', pathData);
+                path.setAttribute('fill', item.color);
+                path.setAttribute('class', 'donut-segment');
+                path.style.opacity = '0';
+                path.style.animation = `fadeIn 0.5s ease forwards ${index * 0.1}s`;
+
+                svg.appendChild(path);
+                currentAngle += angle;
+            });
+
+            const centerText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            centerText.setAttribute('x', centerX);
+            centerText.setAttribute('y', centerY - 5);
+            centerText.setAttribute('text-anchor', 'middle');
+            centerText.setAttribute('fill', '#1e293b');
+            centerText.setAttribute('font-size', '28');
+            centerText.setAttribute('font-weight', 'bold');
+            centerText.textContent = total;
+            svg.appendChild(centerText);
+
+            const labelText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            labelText.setAttribute('x', centerX);
+            labelText.setAttribute('y', centerY + 15);
+            labelText.setAttribute('text-anchor', 'middle');
+            labelText.setAttribute('fill', '#64748b');
+            labelText.setAttribute('font-size', '12');
+            labelText.textContent = 'Total Vehicles';
+            svg.appendChild(labelText);
+        }
+
+        function createLineChart() {
+            const svg = document.getElementById('lineChart');
+            const data = [45, 62, 58, 75, 88, 95, 82, 78, 69, 72, 85, 92];
+            const labels = ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'];
+
+            const padding = 40;
+            const width = 800 - 2 * padding;
+            const height = 300 - 2 * padding;
+            const maxValue = Math.max(...data);
+
+            for (let i = 0; i <= 5; i++) {
+                const y = padding + (height / 5) * i;
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', padding);
+                line.setAttribute('y1', y);
+                line.setAttribute('x2', 800 - padding);
+                line.setAttribute('y2', y);
+                line.setAttribute('class', 'chart-grid');
+                svg.appendChild(line);
+
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', padding - 10);
+                text.setAttribute('y', y + 5);
+                text.setAttribute('text-anchor', 'end');
+                text.setAttribute('class', 'chart-label');
+                text.textContent = Math.round(maxValue - (maxValue / 5) * i);
+                svg.appendChild(text);
+            }
+
+            labels.forEach((label, i) => {
+                const x = padding + (width / (labels.length - 1)) * i;
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', x);
+                text.setAttribute('y', height + padding + 20);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('class', 'chart-label');
+                text.textContent = label;
+                svg.appendChild(text);
+            });
+
+            let pathData = '';
+            let areaData = '';
+            data.forEach((value, i) => {
+                const x = padding + (width / (data.length - 1)) * i;
+                const y = padding + height - (value / maxValue) * height;
+
+                if (i === 0) {
+                    pathData += `M ${x} ${y}`;
+                    areaData += `M ${x} ${padding + height}`;
+                } else {
+                    pathData += ` L ${x} ${y}`;
+                }
+                areaData += ` L ${x} ${y}`;
+
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', x);
+                circle.setAttribute('cy', y);
+                circle.setAttribute('r', '5');
+                circle.setAttribute('fill', '#2563eb');
+                circle.style.cursor = 'pointer';
+                svg.appendChild(circle);
+            });
+
+            areaData += ` L ${padding + width} ${padding + height} Z`;
+
+            const area = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            area.setAttribute('d', areaData);
+            area.setAttribute('class', 'chart-area');
+            svg.insertBefore(area, svg.firstChild);
+
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', pathData);
+            path.setAttribute('class', 'chart-line');
+            path.style.strokeDasharray = '1000';
+            path.style.strokeDashoffset = '1000';
+            svg.appendChild(path);
+        }
+
+        function createHeatmap() {
+            const grid = document.getElementById('heatmapGrid');
+            const hours = 24;
+
+            for (let i = 0; i < hours; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'heatmap-cell';
+                const activity = Math.random();
+                if (activity > 0.7) {
+                    cell.classList.add('high');
+                } else if (activity > 0.4) {
+                    cell.classList.add('medium');
+                } else {
+                    cell.classList.add('low');
+                }
+
+                cell.addEventListener('mouseenter', (e) => {
+                    const tooltip = document.getElementById('tooltip');
+                    tooltip.textContent = `${i}:00 - ${Math.round(activity * 100)}% activity`;
+                    tooltip.classList.add('show');
+                    tooltip.style.left = e.pageX + 10 + 'px';
+                    tooltip.style.top = e.pageY + 10 + 'px';
+                });
+
+                cell.addEventListener('mouseleave', () => {
+                    document.getElementById('tooltip').classList.remove('show');
+                });
+
+                grid.appendChild(cell);
+            }
+        }
+
+        createDonutChart();
+        createLineChart();
+        createHeatmap();
+
+        document.getElementById('refreshBtn').addEventListener('click', function () {
+            const btn = this;
+            const icon = btn.querySelector('i');
+            icon.style.animation = 'spin 1s linear infinite';
+
+            const loading = document.getElementById('loadingOverlay');
+            loading.classList.add('active');
+
+            setTimeout(() => {
+                loading.classList.remove('active');
+                icon.style.animation = '';
+                showNotification('success', 'Success', 'Dashboard refreshed successfully');
+                updateTime();
+            }, 1500);
+        });
+
+        function showNotification(type, title, message) {
+            const notification = document.getElementById('notification');
+            notification.className = `notification ${type} show`;
+            notification.querySelector('.notification-title').textContent = title;
+            notification.querySelector('.notification-message').textContent = message;
+
+            const iconMap = {
+                success: 'fa-check-circle',
+                error: 'fa-times-circle',
+                warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle'
+            };
+
+            notification.querySelector('.notification-icon i').className = `fas ${iconMap[type]}`;
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 4000);
+        }
+
+        document.getElementById('manageAlerts').addEventListener('click', function () {
+            document.getElementById('alertModal').classList.add('active');
+        });
+
+        function closeModal() {
+            document.getElementById('alertModal').classList.remove('active');
+        }
+
+        document.querySelector('.modal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function () {
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('.quick-filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                showNotification('info', 'Filter Applied', `Showing: ${this.textContent}`);
+            });
+        });
+
+        const searchInput = document.getElementById('searchInput');
+        let searchTimeout;
+        searchInput.addEventListener('input', function () {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                if (this.value.length > 2) {
+                    showNotification('info', 'Searching', `Searching for: ${this.value}`);
+                }
+            }, 500);
+        });
+
+        document.getElementById('vehicleTypeFilter').addEventListener('change', function () {
+            showNotification('info', 'Filter Applied', `Vehicle type: ${this.options[this.selectedIndex].text}`);
+        });
+
+        document.getElementById('geozoneFilter').addEventListener('change', function () {
+            showNotification('info', 'Filter Applied', `Geozone: ${this.options[this.selectedIndex].text}`);
+        });
+
+        document.getElementById('dateRange').addEventListener('change', function () {
+            showNotification('info', 'Date Range Updated', `Period: ${this.options[this.selectedIndex].text}`);
+        });
+
+        document.querySelectorAll('.alert-item').forEach(item => {
+            item.addEventListener('click', function () {
+                document.getElementById('alertModal').classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.vehicle-item').forEach(item => {
+            item.addEventListener('click', function () {
+                const vehicleName = this.querySelector('.vehicle-name').textContent;
+                showNotification('info', 'Vehicle Selected', `Viewing details for ${vehicleName}`);
+            });
+        });
+
+        const exportButtons = document.querySelectorAll('.btn-success, .btn-danger');
+        exportButtons.forEach(btn => {
+            if (btn.textContent.includes('Excel')) {
+                btn.addEventListener('click', function () {
+                    const loading = document.getElementById('loadingOverlay');
+                    loading.classList.add('active');
+                    setTimeout(() => {
+                        loading.classList.remove('active');
+                        showNotification('success', 'Export Complete', 'Excel file downloaded successfully');
+                    }, 2000);
+                });
+            } else if (btn.textContent.includes('PDF')) {
+                btn.addEventListener('click', function () {
+                    const loading = document.getElementById('loadingOverlay');
+                    loading.classList.add('active');
+                    setTimeout(() => {
+                        loading.classList.remove('active');
+                        showNotification('success', 'Export Complete', 'PDF file downloaded successfully');
+                    }, 2000);
+                });
+            }
+        });
+
+        function animateValue(element, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const value = Math.floor(progress * (end - start) + start);
+                element.textContent = value;
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        document.querySelectorAll('.stat-value').forEach((element, index) => {
+            const finalValue = parseInt(element.textContent);
+            setTimeout(() => {
+                animateValue(element, 0, finalValue, 1500);
+            }, index * 100);
+        });
+
+        document.querySelectorAll('.progress-fill').forEach(bar => {
+            const width = bar.style.width;
+            bar.style.width = '0%';
+            setTimeout(() => {
+                bar.style.width = width;
+            }, 500);
+        });
+
+        setInterval(() => {
+            const stats = [24, 18, 8, 3];
+            const randomChange = () => Math.floor(Math.random() * 3) - 1;
+
+            stats.forEach((stat, index) => {
+                const newValue = Math.max(0, stat + randomChange());
+                const element = document.querySelectorAll('.stat-value')[index + 1];
+                if (element && Math.random() > 0.7) {
+                    animateValue(element, parseInt(element.textContent), newValue, 1000);
+                }
+            });
+        }, 10000);
+
+        const styleSheet = document.createElement('style');
+        styleSheet.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        `;
+        document.head.appendChild(styleSheet);
+
+        document.querySelectorAll('.stat-card').forEach((card, index) => {
+            card.style.animation = `fadeIn 0.5s ease forwards ${index * 0.1}s`;
+            card.style.opacity = '0';
+        });
+
+        document.querySelectorAll('.card').forEach((card, index) => {
+            card.style.animation = `fadeIn 0.5s ease forwards ${0.6 + index * 0.1}s`;
+            card.style.opacity = '0';
+        });
+
+        const realTimeUpdates = [
+            { vehicle: 'TRK-001', status: 'moving', location: 'Downtown Route' },
+            { vehicle: 'VAN-023', status: 'stopped', location: 'Industrial Park' },
+            { vehicle: 'CAR-045', status: 'idle', location: 'Warehouse District' },
+        ];
+
+        setInterval(() => {
+            const randomUpdate = realTimeUpdates[Math.floor(Math.random() * realTimeUpdates.length)];
+            if (Math.random() > 0.8) {
+                console.log(`Real-time update: ${randomUpdate.vehicle} - ${randomUpdate.status}`);
+            }
+        }, 5000);
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const cards = document.querySelectorAll('.card');
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animation = 'fadeIn 0.6s ease forwards';
+                    }
+                });
+            }, observerOptions);
+
+            cards.forEach(card => observer.observe(card));
+        });
+
+        document.querySelectorAll('.icon-btn').forEach(btn => {
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                const ripple = document.createElement('div');
+                ripple.style.position = 'absolute';
+                ripple.style.width = '20px';
+                ripple.style.height = '20px';
+                ripple.style.borderRadius = '50%';
+                ripple.style.background = 'rgba(37, 99, 235, 0.5)';
+                ripple.style.transform = 'scale(0)';
+                ripple.style.animation = 'ripple 0.6s ease-out';
+                this.appendChild(ripple);
+                setTimeout(() => ripple.remove(), 600);
+            });
+        });
+
+        const rippleStyle = document.createElement('style');
+        rippleStyle.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(rippleStyle);
+
+        document.querySelectorAll('tbody tr').forEach(row => {
+            row.addEventListener('click', function () {
+                const vehicleId = this.querySelector('td:first-child strong').textContent;
+                showNotification('info', 'Vehicle Details', `Loading details for ${vehicleId}`);
+            });
+        });
+
+        const performanceValues = [
+            { selector: '.performance-value', values: ['2,847 km', '65 km/h', '8.2 L/100km', '12.5 hrs'] }
+        ];
+
+        setInterval(() => {
+            if (Math.random() > 0.9) {
+                const elements = document.querySelectorAll('.performance-value');
+                elements.forEach((el, index) => {
+                    el.style.transition = 'all 0.5s ease';
+                    el.style.transform = 'scale(1.1)';
+                    setTimeout(() => {
+                        el.style.transform = 'scale(1)';
+                    }, 500);
+                });
+            }
+        }, 8000);
+
+        window.addEventListener('beforeunload', function () {
+            localStorage.setItem('dashboardState', JSON.stringify({
+                lastUpdate: new Date().toISOString(),
+                filters: {
+                    vehicleType: document.getElementById('vehicleTypeFilter').value,
+                    geozone: document.getElementById('geozoneFilter').value,
+                    dateRange: document.getElementById('dateRange').value
+                }
+            }));
+        });
+
+        window.addEventListener('load', function () {
+            const savedState = localStorage.getItem('dashboardState');
+            if (savedState) {
+                const state = JSON.parse(savedState);
+                console.log('Restored dashboard state from:', state.lastUpdate);
+            }
+        });
+
+        const handleResize = () => {
+            if (window.innerWidth < 768) {
+                document.querySelector('.sidebar')?.style.setProperty('display', 'none');
+            } else {
+                document.querySelector('.sidebar')?.style.removeProperty('display');
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+        handleResize();
+
+        console.log('%c🚀 Fleet Management Dashboard Loaded', 'color: #2563eb; font-size: 16px; font-weight: bold;');
+        console.log('%c✓ All systems operational', 'color: #22c55e; font-size: 14px;');
+        console.log('%c📊 Real-time data streaming active', 'color: #06b6d4; font-size: 14px;');
+
+        const performanceMonitor = setInterval(() => {
+            const memory = performance.memory;
+            if (memory && memory.usedJSHeapSize > 100000000) {
+                console.warn('High memory usage detected');
+            }
+        }, 30000);
+
+        document.querySelectorAll('select, input').forEach(element => {
+            element.addEventListener('focus', function () {
+                this.style.transform = 'scale(1.02)';
+            });
+            element.addEventListener('blur', function () {
+                this.style.transform = 'scale(1)';
+            });
+        });
+
+        const dashboardMetrics = {
+            totalVehicles: 53,
+            activeVehicles: 24,
+            alerts: 2,
+            lastUpdate: new Date()
+        };
+
+        window.getDashboardMetrics = () => dashboardMetrics;
+
+        const simulateRealTimeData = () => {
+            setInterval(() => {
+                const event = Math.random();
+                if (event > 0.95) {
+                    showNotification('warning', 'Vehicle Alert', 'VAN-015 - Speed limit exceeded');
+                } else if (event > 0.90) {
+                    showNotification('info', 'Status Update', 'TRK-034 arrived at destination');
+                }
+            }, 15000);
+        };
+
+        simulateRealTimeData();
+    </script>
+</body>
+</html>
